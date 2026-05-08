@@ -1,185 +1,205 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snow Party Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rabbit Empire - Mining TON</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
+        :root {
+            --bg: #0a0f1b;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent: #ff9f43; /* Carrot Orange */
+            --blue: #5d88ff;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
         body {
-            background: #1a2634; /* نفس لون الخلفية في الصورة */
+            background: var(--bg);
             color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
-            margin: 0; padding: 15px;
-            direction: ltr;
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0; padding: 15px; padding-bottom: 100px;
+            background: radial-gradient(circle at top right, #1e293b, #0a0f1b);
+            user-select: none;
         }
 
-        /* الهيدر العلوي */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
+        /* Top Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-info img { width: 40px; border-radius: 50%; }
+        .avatar { width: 40px; height: 40px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        
+        .balances { display: flex; gap: 10px; }
+        .balance-box { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 20px; text-align: center; backdrop-filter: blur(10px); }
+        .balance-box span { display: block; font-size: 10px; color: #8899a6; }
+        .balance-box b { font-size: 14px; }
 
-        .stats-top { display: flex; gap: 10px; }
-        .stat-badge {
-            background: rgba(255,255,255,0.1);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: flex; align-items: center; gap: 5px;
-        }
-
-        /* الكرت الاحترافي */
+        /* Rabbit Cards */
         .card {
-            background: #253341; /* لون الكرت في الصورة */
+            background: var(--card-bg);
             border-radius: 30px;
             padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
             margin-bottom: 15px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
         }
 
-        .card-image {
-            width: 80px;
-            height: 80px;
-            background: #d0e4f2;
-            border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 40px;
-        }
+        .card-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .rabbit-img { width: 70px; height: 70px; background: #2d3748; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        
+        .card-info h3 { margin: 0; font-size: 17px; }
+        .rarity { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; background: rgba(93, 136, 255, 0.2); color: var(--blue); }
 
-        .card-title h3 { margin: 0; font-size: 18px; }
-        .status-locked { color: #5a87ff; font-size: 12px; font-weight: bold; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .stat-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px; text-align: center; }
+        .stat-label { font-size: 9px; color: #64748b; margin-bottom: 4px; }
+        .stat-value { font-size: 12px; font-weight: bold; }
 
-        /* شبكة المعلومات (Cost, 1H, 24H) */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .footer-actions { display: flex; gap: 10px; }
+        .claim-box { flex: 1; background: var(--glass); border-radius: 15px; padding: 10px; text-align: center; }
+        .buy-btn { flex: 1.5; background: linear-gradient(135deg, #ff9f43, #ee5253); border: none; color: white; border-radius: 15px; font-weight: bold; cursor: pointer; }
+        .buy-btn:disabled { background: #334155; color: #64748b; }
 
-        .info-item {
-            background: #1e2a37;
-            padding: 10px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .info-label { font-size: 10px; color: #8899a6; margin-bottom: 5px; }
-        .info-value { font-size: 14px; font-weight: bold; }
-
-        /* الأزرار السفلية في الكرت */
-        .card-footer {
-            display: flex;
-            gap: 10px;
-        }
-
-        .produced-box {
-            flex: 1;
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .buy-btn {
-            flex: 1.5;
-            background: #3d2a2f; /* لون الزر الأحمر الغامق */
-            color: #ff4d4d;
-            border: 1px solid #5a2a2a;
-            padding: 15px;
-            border-radius: 15px;
-            text-align: center;
-            font-weight: bold;
-            display: flex; flex-direction: column; justify-content: center;
-        }
-
-        /* شريط التنقل السفلي */
+        /* Bottom Nav */
         .navbar {
-            position: fixed;
-            bottom: 20px;
-            left: 20px; right: 20px;
-            background: rgba(37, 51, 65, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 25px;
-            display: flex;
-            padding: 10px;
-            justify-content: space-around;
+            position: fixed; bottom: 20px; left: 15px; right: 15px;
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px);
+            border-radius: 25px; display: flex; padding: 12px; justify-content: space-around;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .nav-item { color: #8899a6; font-size: 10px; text-align: center; }
-        .nav-item.active { color: white; background: #344759; padding: 10px 20px; border-radius: 20px; margin-top: -5px; }
+        .nav-item { text-align: center; color: #64748b; font-size: 10px; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; }
 
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
+    <div class="header">
         <div class="user-info">
-            <div id="user-photo" style="width:35px; height:35px; background:#444; border-radius:50%"></div>
-            <div style="font-size: 14px; font-weight: bold;">LIGHT👑 <br><span style="color:#5a87ff; font-size: 11px;">@y888el</span></div>
-        </div>
-        <div class="stats-top">
-            <div class="stat-badge">💎 0</div>
-            <div class="stat-badge">❄ 2</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <div class="card-image">🐧</div>
-            <div class="card-title">
-                <h3>BABY PENGUIN LV.1</h3>
-                <span class="status-locked">● LOCKED</span>
-            </div>
-            <div style="margin-left: auto; text-align: right; font-size: 12px; color: #8899a6;">LIMIT<br><b style="color:white">0</b>/10</div>
-        </div>
-
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">COST</div>
-                <div class="info-value" style="color:#ffcc00">0.1 💎</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">SNOW /1H</div>
-                <div class="info-value" style="color:#00ccff">+3 ❄</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">SNOW /24H</div>
-                <div class="info-value" style="color:#00ffcc">+72 ❄</div>
+            <div class="avatar" id="user-initial">R</div>
+            <div>
+                <div class="username" id="user-name">Rabbit Miner</div>
+                <div class="handle">Rabbit Empire v1.0</div>
             </div>
         </div>
-
-        <div class="card-footer">
-            <div class="produced-box">
-                <div class="info-label">PRODUCED</div>
-                <div class="info-value">0.0000 ❄</div>
-            </div>
-            <div class="buy-btn">
-                <div style="font-size: 13px;">NEED 0.1000 💎</div>
-                <div style="font-size: 9px; opacity: 0.7;">INSUFFICIENT BALANCE</div>
-            </div>
+        <div class="balances">
+            <div class="balance-box"><span>🥕 Carrots</span><b id="carrots">0.00</b></div>
+            <div class="balance-box"><span>💎 TON</span><b id="ton">0.00</b></div>
         </div>
     </div>
+
+    <div id="game-container">
+        </div>
 
     <div class="navbar">
-        <div class="nav-item">👛<br>WALLET</div>
-        <div class="nav-item">👥<br>FRIENDS</div>
-        <div class="nav-item active">🏠<br>HOME</div>
-        <div class="nav-item">🔄<br>TRADE</div>
-        <div class="nav-item">...<br>MORE</div>
+        <div class="nav-item active"><i>🏠</i>HOME</div>
+        <div class="nav-item"><i>👛</i>WALLET</div>
+        <div class="nav-item"><i>👥</i>FRIENDS</div>
+        <div class="nav-item"><i>📋</i>TASKS</div>
     </div>
 
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Firebase Config
+    const firebaseConfig = { databaseURL: "https://telegram-bot-7bc5f-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "local_test";
+    const userRef = db.ref('rabbit_empire/users/' + uid);
+
+    const RABBITS_DATA = [
+        { id: 1, name: "Baby Rabbit", emoji: "🐰", price: 0.1, h: 3, rarity: "COMMON", limit: 10 },
+        { id: 2, name: "Farmer Rabbit", emoji: "👨‍🌾", price: 0.25, h: 7, rarity: "RARE", limit: 10 },
+        { id: 3, name: "Golden Rabbit", emoji: "✨", price: 0.5, h: 15, rarity: "EPIC", limit: 5 },
+        { id: 4, name: "Cyber Rabbit", emoji: "🤖", price: 1.0, h: 40, rarity: "LEGENDARY", limit: 3 },
+        { id: 5, name: "King Rabbit", emoji: "👑", price: 2.5, h: 100, rarity: "MYTHIC", limit: 1 }
+    ];
+
+    let userData = { carrots: 0, ton: 0, last_claim: Date.now(), rabbits: {} };
+
+    // تحميل البيانات
+    userRef.on('value', (s) => {
+        const data = s.val();
+        if(data) {
+            userData = data;
+            updateUI();
+        } else {
+            userRef.set(userData);
+        }
+    });
+
+    function updateUI() {
+        document.getElementById('carrots').innerText = userData.carrots.toFixed(2);
+        document.getElementById('ton').innerText = userData.ton.toFixed(3);
+        
+        const container = document.getElementById('game-container');
+        container.innerHTML = "";
+
+        RABBITS_DATA.forEach(r => {
+            const count = userData.rabbits[r.id] || 0;
+            const card = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="rabbit-img">${r.emoji}</div>
+                        <div class="card-info">
+                            <h3>${r.name} LV.${r.id}</h3>
+                            <span class="rarity">${r.rarity}</span>
+                        </div>
+                        <div style="margin-left:auto; text-align:right">
+                            <span style="font-size:10px; color:#64748b">OWNED</span><br><b>${count}/${r.limit}</b>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item"><div class="stat-label">COST</div><div class="stat-value">${r.price} 💎</div></div>
+                        <div class="stat-item"><div class="stat-label">1 HOUR</div><div class="stat-value">+${r.h} 🥕</div></div>
+                        <div class="stat-item"><div class="stat-label">24 HOURS</div><div class="stat-value">+${r.h * 24} 🥕</div></div>
+                    </div>
+                    <div class="footer-actions">
+                        <div class="claim-box">
+                            <div class="stat-label">PRODUCING...</div>
+                            <div class="stat-value" style="color:#ff9f43">+${calculateMining(r.id).toFixed(4)} 🥕</div>
+                        </div>
+                        <button class="buy-btn" onclick="buyRabbit(${r.id})" ${count >= r.limit ? 'disabled' : ''}>
+                            ${count >= r.limit ? 'MAX LIMIT' : 'BUY RABBIT'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    }
+
+    function calculateMining(rabbitId) {
+        const count = userData.rabbits[rabbitId] || 0;
+        if(count === 0) return 0;
+        const now = Date.now();
+        const diffInHours = (now - userData.last_claim) / (1000 * 60 * 60);
+        return diffInHours * (RABBITS_DATA.find(x => x.id === rabbitId).h) * count;
+    }
+
+    function buyRabbit(id) {
+        const r = RABBITS_DATA.find(x => x.id === id);
+        if(userData.ton >= r.price) {
+            userData.ton -= r.price;
+            userData.rabbits[id] = (userData.rabbits[id] || 0) + 1;
+            userRef.update(userData);
+            tg.HapticFeedback.impactOccurred('heavy');
+        } else {
+            tg.showAlert("Insufficient TON balance!");
+        }
+    }
+
+    // Passive Mining Loop (Visual only, Server-side logic via timestamps)
+    setInterval(() => {
+        updateUI();
+    }, 1000);
+
+</script>
 </body>
 </html>
