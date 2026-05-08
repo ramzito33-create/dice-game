@@ -3,123 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TON Dice Game</title>
+    <title>TON Dice Game Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <style>
-        body {
-            background-color: #0b0b0b;
-            color: white;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-        }
-        .app-container {
-            width: 90%;
-            max-width: 400px;
-            background: #151515;
-            padding: 30px;
-            border-radius: 30px;
-            border: 2px solid #8e44ad;
-            box-shadow: 0 0 25px rgba(142, 68, 173, 0.4);
-        }
-        .balance-box { margin-bottom: 20px; }
-        .balance-label { font-size: 12px; color: #888; letter-spacing: 1px; }
-        .balance-amount { font-size: 40px; font-weight: bold; color: #00ff88; margin: 5px 0; }
-        .dice-display { font-size: 100px; margin: 25px 0; transition: 0.3s; }
-        .play-button {
-            background: linear-gradient(45deg, #8e44ad, #bc13fe);
-            color: white;
-            border: none;
-            padding: 20px;
-            width: 100%;
-            border-radius: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.5);
-        }
-        .play-button:active { transform: scale(0.95); }
+        :root { --main-purple: #8e44ad; --bg-black: #0a0a0a; --card-bg: #151515; --text-gray: #888; }
+        body { background: var(--bg-black); color: white; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; direction: ltr; overflow: hidden; }
+        
+        .page { display: none; height: 100vh; padding: 20px; box-sizing: border-box; }
+        .active-page { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* الهيدر والرصيد */
+        .balance-header { text-align: center; padding: 40px 0; background: linear-gradient(180deg, #1d0e2e 0%, var(--bg-black) 100%); border-radius: 0 0 30px 30px; margin-bottom: 20px; }
+        .bal-amount { font-size: 3.5rem; font-weight: 900; color: #00ff88; margin: 5px 0; }
+
+        /* الكروت */
+        .card { background: var(--card-bg); border-radius: 20px; padding: 20px; border: 1px solid #222; text-align: center; margin-bottom: 15px; }
+        .dice { font-size: 100px; margin: 20px 0; transition: 0.2s; }
+        
+        /* الأزرار */
+        .btn { background: linear-gradient(90deg, #8e44ad, #a32cc4); color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-ad { background: #333; margin-top: 10px; font-size: 0.9rem; }
+
+        /* شريط التنقل السفلي (Navbar) */
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; padding: 12px 0; border-top: 1px solid #222; }
+        .nav-item { flex: 1; text-align: center; color: #444; font-size: 10px; cursor: pointer; }
+        .nav-item.active { color: var(--main-purple); }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+
+        .task-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="balance-box">
-            <div class="balance-label">YOUR BALANCE</div>
-            <div class="balance-amount" id="bal">0.0000</div>
-            <div style="color: #8e44ad; font-size: 14px; font-weight: bold;">TON</div>
+    <div id="home" class="page active-page">
+        <div class="balance-header">
+            <div style="font-size: 12px; color: var(--text-gray);">TOTAL BALANCE</div>
+            <div class="bal-amount" id="val">0.0000</div>
+            <div style="color: var(--main-purple); font-weight: bold;">TON COIN</div>
         </div>
+        <div class="card">
+            <div id="dice-visual" class="dice">🎲</div>
+            <button class="btn" onclick="play()">SPIN & EARN</button>
+            <button class="btn btn-ad" onclick="showAd()">📺 WATCH AD (+0.005)</button>
+        </div>
+    </div>
 
-        <div id="dice-visual" class="dice-display">🎲</div>
+    <div id="tasks" class="page">
+        <h2 style="text-align: center;">Daily Tasks</h2>
+        <div class="task-item">
+            <div><b>Join Channel</b><br><span style="color:#00ff88">+0.01 TON</span></div>
+            <button class="btn" style="width: auto; padding: 8px 15px;" onclick="window.open('https://t.me/ramzito_channel')">GO</button>
+        </div>
+        <div class="task-item">
+            <div><b>Follow Twitter</b><br><span style="color:#00ff88">+0.01 TON</span></div>
+            <button class="btn" style="width: auto; padding: 8px 15px;">GO</button>
+        </div>
+    </div>
 
-        <button class="play-button" onclick="rollDice()">ROLL & EARN</button>
-        
-        <p style="font-size: 10px; color: #444; margin-top: 20px;">Powered by TON Blockchain Technology</p>
+    <div id="friends" class="page">
+        <h2 style="text-align: center;">Invite Friends</h2>
+        <div class="card">
+            <p>Earn 0.02 TON for every friend!</p>
+            <div id="ref-link" style="background:#000; padding:10px; border-radius:10px; font-size:10px; color:var(--main-purple); word-break:break-all;">Generating...</div>
+            <button class="btn" style="margin-top:10px;" onclick="copy()">COPY LINK</button>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <div class="nav-item active" onclick="tab('home', this)"><i>🏠</i>HOME</div>
+        <div class="nav-item" onclick="tab('tasks', this)"><i>📋</i>TASKS</div>
+        <div class="nav-item" onclick="tab('friends', this)"><i>👥</i>FRIENDS</div>
+        <div class="nav-item" onclick="alert('Withdraw at 0.05 TON')"><i>💰</i>WALLET</div>
     </div>
 
     <script>
-        // تكوين Firebase الخاص بك
-        const firebaseConfig = {
-            databaseURL: "https://telegram-bot-7bc5f-default-rtdb.firebaseio.com"
-        };
+        const firebaseConfig = { databaseURL: "https://telegram-bot-7bc5f-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-        // وظيفة التشغيل
-        try {
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-            
-            const tg = window.Telegram.WebApp;
-            tg.expand();
+        let uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "12345";
+        let uRef = db.ref('users/' + uid);
 
-            // الحصول على الـ ID
-            let userId = "test_user"; 
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                userId = tg.initDataUnsafe.user.id;
+        uRef.on('value', s => {
+            let d = s.val();
+            if(d) {
+                document.getElementById('val').innerText = parseFloat(d.balance).toFixed(4);
+                document.getElementById('ref-link').innerText = "https://t.me/MyDice_Ton_bot?start=" + uid;
+            } else {
+                uRef.set({balance: 0, name: tg.initDataUnsafe.user?.first_name || "User"});
             }
-            
-            const userRef = db.ref('users/' + userId);
+        });
 
-            // تحديث الرصيد من القاعدة
-            userRef.on('value', (snap) => {
-                const val = snap.val();
-                if (val) {
-                    document.getElementById('bal').innerText = parseFloat(val.balance).toFixed(4);
-                } else {
-                    userRef.set({ balance: 0, name: "User" });
+        function tab(pId, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            document.getElementById(pId).classList.add('active-page');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        function play() {
+            const d = document.getElementById('dice-visual');
+            const f = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+            d.style.transform = "rotate(360deg) scale(1.2)";
+            setTimeout(() => {
+                d.innerHTML = f[Math.floor(Math.random()*6)];
+                d.style.transform = "rotate(0deg) scale(1)";
+                uRef.child('balance').transaction(c => (c||0) + 0.0001);
+                tg.HapticFeedback.impactOccurred('medium');
+            }, 300);
+        }
+
+        function showAd() {
+            tg.showConfirm("هل تريد مشاهدة إعلان لربح 0.005 TON؟", (ok) => {
+                if(ok) {
+                    tg.showAlert("تمت مشاهدة الإعلان! (سيتم ربط Adsgram هنا لاحقاً)");
+                    uRef.child('balance').transaction(c => (c||0) + 0.005);
                 }
             });
+        }
 
-            // دالة اللعب
-            window.rollDice = function() {
-                const dice = document.getElementById('dice-visual');
-                const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
-                
-                // حركة بسيطة
-                dice.style.transform = "rotate(360deg) scale(1.2)";
-                
-                setTimeout(() => {
-                    dice.innerHTML = faces[Math.floor(Math.random() * 6)];
-                    dice.style.transform = "rotate(0deg) scale(1)";
-                    
-                    // إضافة رصيد
-                    userRef.child('balance').transaction((current) => {
-                        return (current || 0) + 0.0001;
-                    });
-
-                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                }, 300);
-            };
-
-        } catch (error) {
-            console.error(error);
-            alert("خطأ في الاتصال بقاعدة البيانات");
+        function copy() {
+            let l = document.getElementById('ref-link').innerText;
+            navigator.clipboard.writeText(l);
+            tg.showAlert("تم نسخ رابط الإحالة!");
         }
     </script>
 </body>
