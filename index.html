@@ -3,54 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dice Game Pro</title>
+    <title>TON Dice Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        :root {
-            --bg-black: #050505;
-            --card-gray: #121212;
-            --ton-purple: #8e44ad;
-            --accent-green: #00ff88;
-        }
-
         body {
-            background-color: var(--bg-black);
+            background-color: #0b0b0b;
             color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            direction: ltr;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
         }
+        .app-container {
+            width: 90%;
+            max-width: 400px;
+            background: #151515;
+            padding: 30px;
+            border-radius: 30px;
+            border: 2px solid #8e44ad;
+            box-shadow: 0 0 25px rgba(142, 68, 173, 0.4);
+        }
+        .balance-box { margin-bottom: 20px; }
+        .balance-label { font-size: 12px; color: #888; letter-spacing: 1px; }
+        .balance-amount { font-size: 40px; font-weight: bold; color: #00ff88; margin: 5px 0; }
+        .dice-display { font-size: 100px; margin: 25px 0; transition: 0.3s; }
+        .play-button {
+            background: linear-gradient(45deg, #8e44ad, #bc13fe);
+            color: white;
+            border: none;
+            padding: 20px;
+            width: 100%;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(142, 68, 173, 0.5);
+        }
+        .play-button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
 
-        /* نظام الصفحات */
-        .page { display: none; height: 100vh; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        .active-page { display: block; animation: slideUp 0.3s ease; }
+    <div class="app-container">
+        <div class="balance-box">
+            <div class="balance-label">YOUR BALANCE</div>
+            <div class="balance-amount" id="bal">0.0000</div>
+            <div style="color: #8e44ad; font-size: 14px; font-weight: bold;">TON</div>
+        </div>
 
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        <div id="dice-visual" class="dice-display">🎲</div>
 
-        /* منطقة الرصيد الاحترافية */
-        .header-section { text-align: center; padding: 50px 20px 30px; background: linear-gradient(180deg, #1d0e2e 0%, var(--bg-black) 100%); }
-        .balance-label { font-size: 0.75rem; color: #888; letter-spacing: 1.5px; margin-bottom: 8px; }
-        .main-balance { font-size: 3.2rem; font-weight: 800; margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; }
-        .currency { color: var(--ton-purple); font-size: 1.2rem; }
+        <button class="play-button" onclick="rollDice()">ROLL & EARN</button>
+        
+        <p style="font-size: 10px; color: #444; margin-top: 20px;">Powered by TON Blockchain Technology</p>
+    </div>
 
-        /* البطاقات */
-        .game-box { background: var(--card-gray); border-radius: 24px; padding: 30px; margin: 20px 0; border: 1px solid #222; text-align: center; }
-        .dice-icon { font-size: 90px; margin-bottom: 20px; transition: 0.2s; filter: drop-shadow(0 0 15px rgba(142, 68, 173, 0.4)); }
+    <script>
+        // تكوين Firebase الخاص بك
+        const firebaseConfig = {
+            databaseURL: "https://telegram-bot-7bc5f-default-rtdb.firebaseio.com"
+        };
 
-        /* الأزرار */
-        .btn-primary { background: linear-gradient(90deg, #8e44ad, #a32cc4); color: white; border: none; padding: 18px; width: 100%; border-radius: 16px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-primary:active { transform: scale(0.97); }
+        // وظيفة التشغيل
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            
+            const tg = window.Telegram.WebApp;
+            tg.expand();
 
-        /* قائمة المهام */
-        .task-card { background: var(--card-gray); padding: 15px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1a1a1a; }
-        .task-reward { color: var(--accent-green); font-size: 0.85rem; font-weight: bold; }
+            // الحصول على الـ ID
+            let userId = "test_user"; 
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                userId = tg.initDataUnsafe.user.id;
+            }
+            
+            const userRef = db.ref('users/' + userId);
 
-        /* شريط التنقل السفلي */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); display: flex; padding: 12px 0; border-top: 1px solid #222; z-index: 1000; }
-        .nav-link { flex: 1; text-align: center; color: #555; font-size: 10px; text-decoration: none; cursor: pointer; transition: 0.2s; }
-        .nav-link.active { color: var(--ton-purple); }
-        .nav-link svg { width: 24px; height: 24px; display: block; margin: 0 auto 5
+            // تحديث الرصيد من القاعدة
+            userRef.on('value', (snap) => {
+                const val = snap.val();
+                if (val) {
+                    document.getElementById('bal').innerText = parseFloat(val.balance).toFixed(4);
+                } else {
+                    userRef.set({ balance: 0, name: "User" });
+                }
+            });
+
+            // دالة اللعب
+            window.rollDice = function() {
+                const dice = document.getElementById('dice-visual');
+                const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+                
+                // حركة بسيطة
+                dice.style.transform = "rotate(360deg) scale(1.2)";
+                
+                setTimeout(() => {
+                    dice.innerHTML = faces[Math.floor(Math.random() * 6)];
+                    dice.style.transform = "rotate(0deg) scale(1)";
+                    
+                    // إضافة رصيد
+                    userRef.child('balance').transaction((current) => {
+                        return (current || 0) + 0.0001;
+                    });
+
+                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                }, 300);
+            };
+
+        } catch (error) {
+            console.error(error);
+            alert("خطأ في الاتصال بقاعدة البيانات");
+        }
+    </script>
+</body>
+</html>
