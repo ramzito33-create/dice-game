@@ -2,137 +2,184 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TON Dice Game Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snow Party Clone</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --main-purple: #8e44ad; --bg-black: #0a0a0a; --card-bg: #151515; --text-gray: #888; }
-        body { background: var(--bg-black); color: white; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; direction: ltr; overflow: hidden; }
-        
-        .page { display: none; height: 100vh; padding: 20px; box-sizing: border-box; }
-        .active-page { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body {
+            background: #1a2634; /* نفس لون الخلفية في الصورة */
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+            margin: 0; padding: 15px;
+            direction: ltr;
+        }
 
-        /* الهيدر والرصيد */
-        .balance-header { text-align: center; padding: 40px 0; background: linear-gradient(180deg, #1d0e2e 0%, var(--bg-black) 100%); border-radius: 0 0 30px 30px; margin-bottom: 20px; }
-        .bal-amount { font-size: 3.5rem; font-weight: 900; color: #00ff88; margin: 5px 0; }
+        /* الهيدر العلوي */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-        /* الكروت */
-        .card { background: var(--card-bg); border-radius: 20px; padding: 20px; border: 1px solid #222; text-align: center; margin-bottom: 15px; }
-        .dice { font-size: 100px; margin: 20px 0; transition: 0.2s; }
-        
-        /* الأزرار */
-        .btn { background: linear-gradient(90deg, #8e44ad, #a32cc4); color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
-        .btn-ad { background: #333; margin-top: 10px; font-size: 0.9rem; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-info img { width: 40px; border-radius: 50%; }
 
-        /* شريط التنقل السفلي (Navbar) */
-        .navbar { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; padding: 12px 0; border-top: 1px solid #222; }
-        .nav-item { flex: 1; text-align: center; color: #444; font-size: 10px; cursor: pointer; }
-        .nav-item.active { color: var(--main-purple); }
-        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+        .stats-top { display: flex; gap: 10px; }
+        .stat-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex; align-items: center; gap: 5px;
+        }
 
-        .task-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 10px; }
+        /* الكرت الاحترافي */
+        .card {
+            background: #253341; /* لون الكرت في الصورة */
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card-image {
+            width: 80px;
+            height: 80px;
+            background: #d0e4f2;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px;
+        }
+
+        .card-title h3 { margin: 0; font-size: 18px; }
+        .status-locked { color: #5a87ff; font-size: 12px; font-weight: bold; }
+
+        /* شبكة المعلومات (Cost, 1H, 24H) */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #1e2a37;
+            padding: 10px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .info-label { font-size: 10px; color: #8899a6; margin-bottom: 5px; }
+        .info-value { font-size: 14px; font-weight: bold; }
+
+        /* الأزرار السفلية في الكرت */
+        .card-footer {
+            display: flex;
+            gap: 10px;
+        }
+
+        .produced-box {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .buy-btn {
+            flex: 1.5;
+            background: #3d2a2f; /* لون الزر الأحمر الغامق */
+            color: #ff4d4d;
+            border: 1px solid #5a2a2a;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: bold;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* شريط التنقل السفلي */
+        .navbar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px; right: 20px;
+            background: rgba(37, 51, 65, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            display: flex;
+            padding: 10px;
+            justify-content: space-around;
+        }
+        .nav-item { color: #8899a6; font-size: 10px; text-align: center; }
+        .nav-item.active { color: white; background: #344759; padding: 10px 20px; border-radius: 20px; margin-top: -5px; }
+
     </style>
 </head>
 <body>
 
-    <div id="home" class="page active-page">
-        <div class="balance-header">
-            <div style="font-size: 12px; color: var(--text-gray);">TOTAL BALANCE</div>
-            <div class="bal-amount" id="val">0.0000</div>
-            <div style="color: var(--main-purple); font-weight: bold;">TON COIN</div>
+    <div class="top-bar">
+        <div class="user-info">
+            <div id="user-photo" style="width:35px; height:35px; background:#444; border-radius:50%"></div>
+            <div style="font-size: 14px; font-weight: bold;">LIGHT👑 <br><span style="color:#5a87ff; font-size: 11px;">@y888el</span></div>
         </div>
-        <div class="card">
-            <div id="dice-visual" class="dice">🎲</div>
-            <button class="btn" onclick="play()">SPIN & EARN</button>
-            <button class="btn btn-ad" onclick="showAd()">📺 WATCH AD (+0.005)</button>
+        <div class="stats-top">
+            <div class="stat-badge">💎 0</div>
+            <div class="stat-badge">❄ 2</div>
         </div>
     </div>
 
-    <div id="tasks" class="page">
-        <h2 style="text-align: center;">Daily Tasks</h2>
-        <div class="task-item">
-            <div><b>Join Channel</b><br><span style="color:#00ff88">+0.01 TON</span></div>
-            <button class="btn" style="width: auto; padding: 8px 15px;" onclick="window.open('https://t.me/ramzito_channel')">GO</button>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-image">🐧</div>
+            <div class="card-title">
+                <h3>BABY PENGUIN LV.1</h3>
+                <span class="status-locked">● LOCKED</span>
+            </div>
+            <div style="margin-left: auto; text-align: right; font-size: 12px; color: #8899a6;">LIMIT<br><b style="color:white">0</b>/10</div>
         </div>
-        <div class="task-item">
-            <div><b>Follow Twitter</b><br><span style="color:#00ff88">+0.01 TON</span></div>
-            <button class="btn" style="width: auto; padding: 8px 15px;">GO</button>
-        </div>
-    </div>
 
-    <div id="friends" class="page">
-        <h2 style="text-align: center;">Invite Friends</h2>
-        <div class="card">
-            <p>Earn 0.02 TON for every friend!</p>
-            <div id="ref-link" style="background:#000; padding:10px; border-radius:10px; font-size:10px; color:var(--main-purple); word-break:break-all;">Generating...</div>
-            <button class="btn" style="margin-top:10px;" onclick="copy()">COPY LINK</button>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">COST</div>
+                <div class="info-value" style="color:#ffcc00">0.1 💎</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">SNOW /1H</div>
+                <div class="info-value" style="color:#00ccff">+3 ❄</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">SNOW /24H</div>
+                <div class="info-value" style="color:#00ffcc">+72 ❄</div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <div class="produced-box">
+                <div class="info-label">PRODUCED</div>
+                <div class="info-value">0.0000 ❄</div>
+            </div>
+            <div class="buy-btn">
+                <div style="font-size: 13px;">NEED 0.1000 💎</div>
+                <div style="font-size: 9px; opacity: 0.7;">INSUFFICIENT BALANCE</div>
+            </div>
         </div>
     </div>
 
     <div class="navbar">
-        <div class="nav-item active" onclick="tab('home', this)"><i>🏠</i>HOME</div>
-        <div class="nav-item" onclick="tab('tasks', this)"><i>📋</i>TASKS</div>
-        <div class="nav-item" onclick="tab('friends', this)"><i>👥</i>FRIENDS</div>
-        <div class="nav-item" onclick="alert('Withdraw at 0.05 TON')"><i>💰</i>WALLET</div>
+        <div class="nav-item">👛<br>WALLET</div>
+        <div class="nav-item">👥<br>FRIENDS</div>
+        <div class="nav-item active">🏠<br>HOME</div>
+        <div class="nav-item">🔄<br>TRADE</div>
+        <div class="nav-item">...<br>MORE</div>
     </div>
 
-    <script>
-        const firebaseConfig = { databaseURL: "https://telegram-bot-7bc5f-default-rtdb.firebaseio.com" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "12345";
-        let uRef = db.ref('users/' + uid);
-
-        uRef.on('value', s => {
-            let d = s.val();
-            if(d) {
-                document.getElementById('val').innerText = parseFloat(d.balance).toFixed(4);
-                document.getElementById('ref-link').innerText = "https://t.me/MyDice_Ton_bot?start=" + uid;
-            } else {
-                uRef.set({balance: 0, name: tg.initDataUnsafe.user?.first_name || "User"});
-            }
-        });
-
-        function tab(pId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.getElementById(pId).classList.add('active-page');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-            tg.HapticFeedback.selectionChanged();
-        }
-
-        function play() {
-            const d = document.getElementById('dice-visual');
-            const f = ['⚀','⚁','⚂','⚃','⚄','⚅'];
-            d.style.transform = "rotate(360deg) scale(1.2)";
-            setTimeout(() => {
-                d.innerHTML = f[Math.floor(Math.random()*6)];
-                d.style.transform = "rotate(0deg) scale(1)";
-                uRef.child('balance').transaction(c => (c||0) + 0.0001);
-                tg.HapticFeedback.impactOccurred('medium');
-            }, 300);
-        }
-
-        function showAd() {
-            tg.showConfirm("هل تريد مشاهدة إعلان لربح 0.005 TON؟", (ok) => {
-                if(ok) {
-                    tg.showAlert("تمت مشاهدة الإعلان! (سيتم ربط Adsgram هنا لاحقاً)");
-                    uRef.child('balance').transaction(c => (c||0) + 0.005);
-                }
-            });
-        }
-
-        function copy() {
-            let l = document.getElementById('ref-link').innerText;
-            navigator.clipboard.writeText(l);
-            tg.showAlert("تم نسخ رابط الإحالة!");
-        }
-    </script>
 </body>
 </html>
